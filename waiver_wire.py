@@ -10,6 +10,10 @@ def get_grok_recommendations():
     prompt = """Search X and the web thoroughly for the best fantasy football waiver wire 
 pickups for the coming week of the 2024 NFL season. 
 
+CRITICAL: Verify all player schedules, matchups, and injury reports before making recommendations. 
+Double-check that the teams and opponents you mention are actually playing each other in the 
+upcoming weeks. Do not hallucinate matchups.
+
 Focus your X search on:
 - Fantasy experts and analysts (e.g., @FantasyPros, @TheFFExperts, @YahooFantasy, 
   @ScottBarrettDFB, @JJZachariason)
@@ -19,6 +23,7 @@ Focus your X search on:
 
 Also search the web for:
 - Latest waiver wire articles from FantasyPros, ESPN, Yahoo, The Athletic, CBS Sports
+- VERIFIED NFL schedules and matchups for the next 2-3 weeks
 - Player news, snap counts, and target share from last week
 - Upcoming matchups and defensive rankings
 
@@ -33,7 +38,7 @@ Provide me with TOP 5 PICKUPS FOR EACH POSITION:
 For each player include:
 - Ownership percentage (if available)
 - Why they're valuable (injury replacement, favorable schedule, usage trending up, etc.)
-- Next 2-3 weeks outlook
+- VERIFIED next 2-3 weeks opponent schedule with actual matchups
 
 At the end, tell me which ONE player should be my #1 waiver priority overall.
 
@@ -43,7 +48,8 @@ Instead use:
 - Blank lines between sections
 - Simple dashes or numbers for lists
 
-Prioritize players available in most leagues (under 50% rostered)."""
+Prioritize players available in most leagues (under 50% rostered). Be accurate and verify all 
+information before including it."""
 
     response = requests.post(
         'https://api.x.ai/v1/chat/completions',
@@ -53,9 +59,9 @@ Prioritize players available in most leagues (under 50% rostered)."""
         },
         json={
             'messages': [{'role': 'user', 'content': prompt}],
-            'model': 'grok-4-fast',
+            'model': 'grok-4',  # Using the flagship model
             'stream': False,
-            'temperature': 0,
+            'temperature': 0,  # Lower temperature for more factual responses
             'search_parameters': {
                 'mode': 'on',
                 'sources': [
@@ -64,7 +70,7 @@ Prioritize players available in most leagues (under 50% rostered)."""
                     {'type': 'news'}
                 ],
                 'return_citations': True,
-                'max_search_results': 20
+                'max_search_results': 25  # Increased for more comprehensive search
             }
         }
     )
@@ -106,7 +112,7 @@ def send_email(message):
         server.send_message(msg)
 
 if __name__ == '__main__':
-    print("Getting recommendations from Grok with Live Search...")
+    print("Getting recommendations from Grok-4 with Live Search...")
     recommendations = get_grok_recommendations()
     print("Sending email...")
     send_email(recommendations)
