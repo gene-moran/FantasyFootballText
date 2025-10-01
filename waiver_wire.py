@@ -22,17 +22,29 @@ Also search the web for:
 - Player news, snap counts, and target share from last week
 - Upcoming matchups and defensive rankings
 
-Provide me with:
-1. TOP 5 WAIVER PICKUPS broken down by position (QB, RB, WR, TE)
-2. Ownership percentage for each player (if available)
-3. Why they're valuable (injury replacement, favorable schedule, usage trending up, etc.)
-4. Which one should be my #1 priority
+Provide me with TOP 5 PICKUPS FOR EACH POSITION:
+- 5 QBs
+- 5 RBs
+- 5 WRs
+- 5 TEs
+- 5 Kickers (K)
+- 5 Defenses (D/ST)
 
-Format it concisely so I can quickly decide who to target. Prioritize players 
-available in most leagues (under 50% rostered). Focus on this week's value and 
-the next 2-3 weeks of schedule."""
+For each player include:
+- Ownership percentage (if available)
+- Why they're valuable (injury replacement, favorable schedule, usage trending up, etc.)
+- Next 2-3 weeks outlook
 
-    # UPDATED: Added search_parameters for Live Search
+At the end, tell me which ONE player should be my #1 waiver priority overall.
+
+Format your response for a PLAIN TEXT EMAIL - do not use markdown symbols like ###, **, or -. 
+Instead use:
+- ALL CAPS for section headers
+- Blank lines between sections
+- Simple dashes or numbers for lists
+
+Prioritize players available in most leagues (under 50% rostered)."""
+
     response = requests.post(
         'https://api.x.ai/v1/chat/completions',
         headers={
@@ -41,15 +53,15 @@ the next 2-3 weeks of schedule."""
         },
         json={
             'messages': [{'role': 'user', 'content': prompt}],
-            'model': 'grok-4-fast',  # Updated model name
+            'model': 'grok-4-fast',
             'stream': False,
             'temperature': 0,
             'search_parameters': {
-                'mode': 'on',  # Force search to be enabled
+                'mode': 'on',
                 'sources': [
-                    {'type': 'x'},    # Search X posts
-                    {'type': 'web'},  # Search websites
-                    {'type': 'news'}  # Search news sources
+                    {'type': 'x'},
+                    {'type': 'web'},
+                    {'type': 'news'}
                 ],
                 'return_citations': True,
                 'max_search_results': 20
@@ -57,7 +69,6 @@ the next 2-3 weeks of schedule."""
         }
     )
     
-    # Debug output
     print("API Response Status:", response.status_code)
     
     if response.status_code != 200:
@@ -66,16 +77,15 @@ the next 2-3 weeks of schedule."""
     
     response_data = response.json()
     
-    # Check for errors
     if 'error' in response_data:
         raise Exception(f"Grok API Error: {response_data['error']}")
     
-    # Extract content
     content = response_data['choices'][0]['message']['content']
     
     # Add citations if available
     if 'citations' in response_data:
-        content += "\n\nSources:\n" + "\n".join(response_data['citations'])
+        content += "\n\n" + "="*50 + "\nSOURCES:\n" + "="*50 + "\n"
+        content += "\n".join(response_data['citations'])
     
     return content
 
