@@ -32,6 +32,7 @@ Format it concisely so I can quickly decide who to target. Prioritize players
 available in most leagues (under 50% rostered). Focus on this week's value and 
 the next 2-3 weeks of schedule."""
 
+    # UPDATED: Added search_parameters for Live Search
     response = requests.post(
         'https://api.x.ai/v1/chat/completions',
         headers={
@@ -40,13 +41,43 @@ the next 2-3 weeks of schedule."""
         },
         json={
             'messages': [{'role': 'user', 'content': prompt}],
-            'model': 'grok-beta',
+            'model': 'grok-4-fast',  # Updated model name
             'stream': False,
-            'temperature': 0
+            'temperature': 0,
+            'search_parameters': {
+                'mode': 'on',  # Force search to be enabled
+                'sources': [
+                    {'type': 'x'},    # Search X posts
+                    {'type': 'web'},  # Search websites
+                    {'type': 'news'}  # Search news sources
+                ],
+                'return_citations': True,
+                'max_search_results': 20
+            }
         }
     )
     
-    return response.json()['choices'][0]['message']['content']
+    # Debug output
+    print("API Response Status:", response.status_code)
+    
+    if response.status_code != 200:
+        print("API Response:", response.text)
+        raise Exception(f"API Error: {response.status_code} - {response.text}")
+    
+    response_data = response.json()
+    
+    # Check for errors
+    if 'error' in response_data:
+        raise Exception(f"Grok API Error: {response_data['error']}")
+    
+    # Extract content
+    content = response_data['choices'][0]['message']['content']
+    
+    # Add citations if available
+    if 'citations' in response_data:
+        content += "\n\nSources:\n" + "\n".join(response_data['citations'])
+    
+    return content
 
 def send_email(message):
     sender_email = os.environ['SENDER_EMAIL']
@@ -58,7 +89,6 @@ def send_email(message):
     msg['From'] = sender_email
     msg['To'] = recipient
     
-    # Add message as plain text
     msg.attach(MIMEText(message, 'plain'))
     
     with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
@@ -66,7 +96,7 @@ def send_email(message):
         server.send_message(msg)
 
 if __name__ == '__main__':
-    print("Getting recommendations from Grok...")
+    print("Getting recommendations from Grok with Live Search...")
     recommendations = get_grok_recommendations()
     print("Sending email...")
     send_email(recommendations)
