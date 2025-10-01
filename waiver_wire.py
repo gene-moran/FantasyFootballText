@@ -8,7 +8,7 @@ def get_grok_recommendations():
     api_key = os.environ['GROK_API_KEY']
     
     prompt = """Search X and the web thoroughly for the best fantasy football waiver wire 
-pickups for the coming week of the 2024 NFL season. 
+pickups for the coming week of the 2025 NFL season. 
 
 CRITICAL: Verify all player schedules, matchups, and injury reports before making recommendations. 
 Double-check that the teams and opponents you mention are actually playing each other in the 
